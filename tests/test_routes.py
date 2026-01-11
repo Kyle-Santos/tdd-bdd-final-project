@@ -179,6 +179,82 @@ class TestProductRoutes(TestCase):
         response = self.client.get(f"{BASE_URL}/{0}")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    def test_update_product(self):
+        """It should update the Product"""
+        test_product = self._create_products(1)[0]
+        response = self.client.get(f"{BASE_URL}/{test_product.id}")
+        assert response.status_code == status.HTTP_200_OK
+        
+        data = response.get_json()
+        data["description"] = "unknown" 
+
+        response = self.client.put(f"{BASE_URL}/{data['id']}", json=data)
+        assert response.status_code == status.HTTP_200_OK
+
+        response = self.client.get(f"{BASE_URL}/{data['id']}")
+        updated_data = response.get_json()
+        assert updated_data["description"] == "unknown" 
+    
+    def test_delete_product(self):
+        """It should delete the Product"""
+        test_product = self._create_products(1)[0]
+        response = self.client.get(f"{BASE_URL}/{test_product.id}")
+        assert response.status_code == status.HTTP_200_OK
+
+        response = self.client.delete(f"{BASE_URL}/{test_product.id}")
+        assert response.status_code == status.HTTP_200_OK
+        response = self.client.get(f"{BASE_URL}/{test_product.id}")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        
+    def test_list_all_products(self):
+        """It should list all products"""
+        test_products = self._create_products(5)
+
+        response = self.client.get(f"{BASE_URL}")
+        assert response.status_code == status.HTTP_200_OK
+
+        data = response.get_json()
+        assert len(data) == len(test_products)
+    
+    def test_list_by_name(self):
+        """It should list products by name"""
+        test_products = self._create_products(5)
+        name = test_products[0].name
+
+        count = len([prod for prod in test_products if prod.name == name])
+
+        response = self.client.get(BASE_URL, query_string=f"name={name}")
+        assert response.status_code == status.HTTP_200_OK
+
+        data = response.get_json()
+        assert len(data) == count
+
+    def test_list_by_category(self):
+        """It should list products by category"""
+        test_products = self._create_products(5)
+        category = test_products[0].category
+
+        count = len([prod for prod in test_products if prod.category == category])
+
+        response = self.client.get(BASE_URL, query_string=f"category={category.name}")
+        assert response.status_code == status.HTTP_200_OK
+
+        data = response.get_json()
+        assert len(data) == count
+    
+    def test_list_by_availability(self):
+        """It should list products by availability"""
+        test_products = self._create_products(5)
+        availability = test_products[0].available
+
+        count = len([prod for prod in test_products if prod.available == availability])
+
+        response = self.client.get(BASE_URL, query_string=f"available={availability}")
+        assert response.status_code == status.HTTP_200_OK
+
+        data = response.get_json()
+        assert len(data) == count
+
     ######################################################################
     # Utility functions
     ######################################################################
